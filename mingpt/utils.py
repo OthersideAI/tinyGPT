@@ -18,7 +18,7 @@ def top_k_logits(logits, k):
     return out
 
 @torch.no_grad()
-def sample(model, x, steps, temperature=1.0, sample=False, top_k=None):
+def sample(model, space_encoding, x, steps, temperature=1.0, sample=False, top_k=None):
     """
     take a conditioning sequence of indices in x (of shape (b,t)) and predict the next token in
     the sequence, feeding the predictions back into the model each time. Clearly the sampling
@@ -42,6 +42,11 @@ def sample(model, x, steps, temperature=1.0, sample=False, top_k=None):
             ix = torch.multinomial(probs, num_samples=1)
         else:
             _, ix = torch.topk(probs, k=1, dim=-1)
+        
+        # if the next token is a space, we're done (use space encoding, which is a number corresponding to the space), here's the start of the encodings file that we pulled it from, for reference: {"0": "\n", "1": " ", "2": "(", "3": ")"}. so, for example, if the next token is a space, which corresponds to the number 1, we break
+        if ix == space_encoding:
+            break
+
         # append to the sequence and continue
         x = torch.cat((x, ix), dim=1)
 
